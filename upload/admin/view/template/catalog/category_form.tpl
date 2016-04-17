@@ -135,8 +135,19 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="input-keyword"><span data-toggle="tooltip" title="<?php echo $help_keyword; ?>"><?php echo $entry_keyword; ?></span></label>
                 <div class="col-sm-10">
-                  <input type="text" name="keyword" value="<?php echo $keyword; ?>" placeholder="<?php echo $entry_keyword; ?>" id="input-keyword" class="form-control" />
-                  <?php if ($error_keyword) { ?>
+				  <?php foreach ($languages as $language) {
+				    $lang_id = $language['language_id'];
+				    $keyword = isset($keywords) && array_key_exists($lang_id, $keywords) ? $keywords[$lang_id] : array('keyword'=>'');
+					$lang_code = $language['code'];
+				  ?>
+				    <div class="input-group">
+					  <span class="input-group-addon">
+					    <img src="language/<?php echo $lang_code; ?>/<?php echo $lang_code; ?>.png" title="<?php echo $language['name']; ?>" />
+					  </span>
+					  <input type="text" name="keywords[<?php echo $lang_id; ?>][keyword]" value="<?php echo $keyword['keyword']; ?>"  placeholder="<?php echo $entry_keyword; ?>" class="form-control" /> 
+					</div>
+				  <?php } ?>
+				  <?php if ($error_keyword) { ?>
                   <div class="text-danger"><?php echo $error_keyword; ?></div>
                   <?php } ?>                
                 </div>

@@ -812,12 +812,16 @@ class ControllerCatalogProduct extends Controller {
 			$data['product_store'] = array(0);
 		}
 
-		if (isset($this->request->post['keyword'])) {
-			$data['keyword'] = $this->request->post['keyword'];
-		} elseif (!empty($product_info)) {
-			$data['keyword'] = $product_info['keyword'];
+		if (isset($this->request->post['keywords'])) {
+			$keywords = $this->request->post['keywords'];
+		} elseif (isset($this->request->get['product_id'])) {
+			$keywords = $this->model_catalog_product->getProductKeywords($this->request->get['product_id']);
 		} else {
-			$data['keyword'] = '';
+			$keywords = array();
+		}
+
+		foreach($keywords as $keyword) {
+			$data['keywords'][$keyword['language_id']] = $keyword;
 		}
 
 		if (isset($this->request->post['shipping'])) {
@@ -1171,7 +1175,7 @@ class ControllerCatalogProduct extends Controller {
 				'date_end'          => ($product_special['date_end'] != '0000-00-00') ? $product_special['date_end'] :  ''
 			);
 		}
-		
+
 		// Image
 		if (isset($this->request->post['image'])) {
 			$data['image'] = $this->request->post['image'];
@@ -1319,17 +1323,20 @@ class ControllerCatalogProduct extends Controller {
 			$this->error['model'] = $this->language->get('error_model');
 		}
 
-		if (utf8_strlen($this->request->post['keyword']) > 0) {
-			$this->load->model('catalog/url_alias');
+		$this->load->model('catalog/url_alias');
+		$keywords = $this->request->post['keywords'];
+		if($keywords) {
+			foreach($keywords as $keyword) {
+				if(utf8_strlen($keyword)) continue;
+				$url_alias_info = $this->model_catalog_url_alias->getUrlAlias($keyword['keyword']);
 
-			$url_alias_info = $this->model_catalog_url_alias->getUrlAlias($this->request->post['keyword']);
+				if ($url_alias_info && isset($this->request->get['product_id']) && $url_alias_info['query'] != 'product_id=' . $this->request->get['product_id']) {
+					$this->error['keyword'] = sprintf($this->language->get('error_keyword'));
+				}
 
-			if ($url_alias_info && isset($this->request->get['product_id']) && $url_alias_info['query'] != 'product_id=' . $this->request->get['product_id']) {
-				$this->error['keyword'] = sprintf($this->language->get('error_keyword'));
-			}
-
-			if ($url_alias_info && !isset($this->request->get['product_id'])) {
-				$this->error['keyword'] = sprintf($this->language->get('error_keyword'));
+				if ($url_alias_info && !isset($this->request->get['product_id'])) {
+					$this->error['keyword'] = sprintf($this->language->get('error_keyword'));
+				}
 			}
 		}
 
