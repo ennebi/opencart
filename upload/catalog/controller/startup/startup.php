@@ -96,12 +96,14 @@ class ControllerStartupStartup extends Controller {
 		// Set the config language_id
 		$this->config->set('config_language_id', $languages[$code]['language_id']);
 
-		/// Redirect to default URL if detected language URL is different
-		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "url_root WHERE language_id = '" . (int)$languages[$code]['language_id'] . "'");
-		if ($query->num_rows && $query->row['url_root']) {
-			$url_root = $query->row['url_root'];
-			if(substr($request, 0, strlen($url_root)) != $url_root) {
-				$this->response->redirect('http://'.$url_root);
+		// Redirect to default URL if detected language URL is different and only if not giving route directly
+		if (!isset($this->request->get['route'])) {
+			$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "url_root WHERE language_id = '" . (int)$languages[$code]['language_id'] . "'");
+			if ($query->num_rows && $query->row['url_root']) {
+				$url_root = $query->row['url_root'];
+				if(substr($request, 0, strlen($url_root)) != $url_root) {
+					$this->response->redirect('http://'.$url_root);
+				}
 			}
 		}
 
