@@ -13,7 +13,7 @@ class Url {
 		$this->rewrite[] = $rewrite;
 	}
 
-	public function link($route, $args = '', $secure = false) {
+	public function linkNotRewritten($route, $args = '', $secure = false) {
 		if ($this->ssl && $secure) {
 			$url = $this->ssl . 'index.php?route=' . $route;
 		} else {
@@ -28,10 +28,17 @@ class Url {
 			}
 		}
 
+		return $url;
+	}
+
+	public function rewriteLink($url) {
 		foreach ($this->rewrite as $rewrite) {
 			$url = $rewrite->rewrite($url);
 		}
-
 		return $url;
+	}
+
+	public function link($route, $args = '', $secure = false) {
+		return $this->rewriteLink($this->linkNotRewritten($route, $args, $secure));
 	}
 }

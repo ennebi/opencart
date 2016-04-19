@@ -39,7 +39,7 @@ class ControllerCommonLanguage extends Controller {
 				$url = '&' . urldecode(http_build_query($url_data, '', '&'));
 			}
 
-			$data['redirect'] = $this->url->link($route, $url, $this->request->server['HTTPS']);
+			$data['redirect'] = $this->url->linkNotRewritten($route, $url, $this->request->server['HTTPS']);
 		}
 
 		return $this->load->view('common/language', $data);
@@ -51,7 +51,7 @@ class ControllerCommonLanguage extends Controller {
 		}
 
 		if (isset($this->request->post['redirect'])) {
-			$this->response->redirect($this->request->post['redirect']);
+			$this->response->redirect($this->url->rewriteLink($this->request->post['redirect']));
 		} else {
 			$this->response->redirect($this->url->link('common/home'));
 		}

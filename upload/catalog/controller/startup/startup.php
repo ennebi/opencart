@@ -66,15 +66,27 @@ class ControllerStartupStartup extends Controller {
 		if (!array_key_exists($code, $languages)) {
 			$code = $this->config->get('config_language');
 		}
-		
+
+		// Check if a specific language is specified in URL
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "url_root ORDER BY (CASE WHEN language_id = '" . (int)$languages[$code]['language_id'] ."' THEN 1 ELSE 2 END) ASC");
+		$request = $this->db->escape(str_replace('www.', '', $_SERVER['HTTP_HOST']) . rtrim($_SERVER['REQUEST_URI'], '/.\\') . '/');
+		foreach($query->rows as $result) {
+			if(substr_compare($result['url_root'], $request, 0, utf8_strlen($result['url_root']), false) == 0) {
+				foreach($languages as $language_code => $language) {
+					if($language['language_id'] == $result['language_id'])
+						$code = $language_code;
+				}
+			}
+		}
+
 		if (!isset($this->session->data['language']) || $this->session->data['language'] != $code) {
 			$this->session->data['language'] = $code;
 		}
-				
+
 		if (!isset($this->request->cookie['language']) || $this->request->cookie['language'] != $code) {
 			setcookie('language', $code, time() + 60 * 60 * 24 * 30, '/', $this->request->server['HTTP_HOST']);
 		}
-				
+
 		// Overwrite the default language object
 		$language = new Language($code);
 		$language->load($code);
@@ -82,7 +94,16 @@ class ControllerStartupStartup extends Controller {
 		$this->registry->set('language', $language);
 		
 		// Set the config language_id
-		$this->config->set('config_language_id', $languages[$code]['language_id']);	
+		$this->config->set('config_language_id', $languages[$code]['language_id']);
+
+		/// Redirect to default URL if detected language URL is different
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "url_root WHERE language_id = '" . (int)$languages[$code]['language_id'] . "'");
+		if ($query->num_rows && $query->row['url_root']) {
+			$url_root = $query->row['url_root'];
+			if(substr($request, 0, strlen($url_root)) != $url_root) {
+				$this->response->redirect('http://'.$url_root);
+			}
+		}
 
 		// Customer
 		$customer = new Cart\Customer($this->registry);

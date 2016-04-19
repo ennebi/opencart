@@ -69,13 +69,22 @@ class ControllerStartupSeoUrl extends Controller {
 		}
 	}
 
+	private function getLanguageIdFromCode($code) {
+		$this->load->model('localisation/language');
+		$languages = $results = $this->model_localisation_language->getLanguages();
+		if(array_key_exists($code, $languages)) {
+			return $languages[$code]['language_id'];
+		}
+		return $this->config->get('config_language_id');
+	}
+
 	public function rewrite($link) {
 		$url_info = parse_url(str_replace('&amp;', '&', $link));
 
 		$url = '';
 
 		$data = array();
-		$language_id = $this->config->get('config_language_id');
+		$language_id = $this->getLanguageIdFromCode($this->session->data['language']);
 
 		parse_str($url_info['query'], $data);
 
@@ -123,7 +132,13 @@ class ControllerStartupSeoUrl extends Controller {
 				}
 			}
 
-			return $url_info['scheme'] . '://' . $url_info['host'] . (isset($url_info['port']) ? ':' . $url_info['port'] : '') . str_replace('/index.php', '', $url_info['path']) . $url . $query;
+			$url_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "url_root ORDER BY (CASE WHEN language_id = '" . (int)$language_id ."' THEN 1 ELSE 2 END) ASC");
+			if($url_query && $url_query->num_rows)
+				$link = str_replace($_SERVER['PHP_SELF'], $url_query->row['url_root'], $url_info['path']);
+			else
+				$link = $url_info['host'] . (isset($url_info['port']) ? ':' . $url_info['port'] : '') . $url_info['path'];
+			$link = str_replace('/index.php', '', $link);
+			return $url_info['scheme'] . '://'  . $link . $url . $query;
 		} else {
 			return $link;
 		}
