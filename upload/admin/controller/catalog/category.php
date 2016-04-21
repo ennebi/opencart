@@ -559,7 +559,7 @@ class ControllerCatalogCategory extends Controller {
 		$keywords = $this->request->post['keywords'];
 		if($keywords) {
 			foreach($keywords as $keyword) {
-				if(utf8_strlen($keyword)) continue;
+				if(utf8_strlen($keyword['keyword'])) continue;
 				$url_alias_info = $this->model_catalog_url_alias->getUrlAlias($keyword['keyword']);
 
 				if ($url_alias_info && isset($this->request->get['category_id']) && $url_alias_info['query'] != 'category_id=' . $this->request->get['category_id']) {
